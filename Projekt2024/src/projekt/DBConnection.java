@@ -24,7 +24,7 @@ import java.sql.SQLException;
 	      synchronized (DBConnection.class) {
 	        if (dbConnection == null) {
 	          try {
-	            Class.forName("org.sqlite.JDBC");
+	        	  Class.forName("com.mysql.cj.jdbc.Driver");
 	            dbConnection = DriverManager.getConnection("jdbc:sqlite:src/funguj.db");
 	          } catch (SQLException | ClassNotFoundException e) {
 	            e.printStackTrace(); // log it

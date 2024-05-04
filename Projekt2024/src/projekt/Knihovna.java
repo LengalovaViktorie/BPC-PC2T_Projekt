@@ -2,7 +2,9 @@ package projekt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,7 +14,6 @@ import java.sql.DriverManager;
 public class Knihovna {
 	
 
-//TODO  boolean vyměnit za 0 a 1 kvuli databazi(pokud uzivatel zada neco jineho, tak mu to program rekne a bude znovu pozadovat true nebo false)
 //TODO pokud uzivatel zada spatny nazev knihy, program toto vypise a bude znovu pozadovat nazev a nebude ho to hazet znovu na stranku
 	
 	
@@ -70,15 +71,27 @@ public class Knihovna {
         int rokVydani;
         //boolean dostupnost;
         
-        
-   	//Connection conn = DBConnection.getDBConnection();
-   	 /*String insertBook = "INSERT INTO Knihy" + "(IdKniha, jmenoAutora, rok, dostupnost)"+ "VALUES(?,?,?,?)";
-   	 
-   	 try (PreparedStatement prStmt = conn.prepareStatement(insertBook)) {
+        mojeDatabaze.nactiZDatabaze();
+   //	Connection conn = DBConnection.getDBConnection();
+   	/* String insertBook = "SELECT IdKnihy FROM Knihy";
+     // Vytvoření statementu
+     Statement statement = connection.createStatement();
+
+     // Provedení dotazu
+     ResultSet resultSet = statement.executeQuery(sql);
+
+     // Zpracování výsledků
+     while (resultSet.next()) {
+         // Načtení hodnot z výsledků
+         String idKnihy = resultSet.getString("IdKnihy");
+         String jmenoAutora = resultSet.getString("jmenoAutora");
+         int rok = resultSet.getInt("rok");
+         boolean dostupnost = resultSet.getBoolean("dostupnost");*/
+   	 /*try (PreparedStatement prStmt = conn.prepareStatement(insertBook)) {
              prStmt.setString(1, nazevKnihy);
              prStmt.setString(2, jmenoAutora);
              prStmt.setInt(3, rokVydani);
-             prStmt.setBoolean(4, dostupnost);
+             //prStmt.setBoolean(4, dostupnost);
 
              prStmt.executeUpdate();
 
@@ -87,14 +100,13 @@ public class Knihovna {
              System.out.println("Uzivatel uz byl vlozen nebo jste zadali spatny SQL prikaz INSERT");
              e.printStackTrace();
            }*/
-        //List<Kniha> seznamKnih = new ArrayList<>();
 
-        mojeDatabaze.pridejKnihu(new Roman("Havran", "Edgar Poe", 2004, false, "Thriller"));
-        mojeDatabaze.pridejKnihu(new Roman("Na větrné hůrce", "Elizabeth", 1874, false, "Fantasy"));
-        mojeDatabaze.pridejKnihu(new Roman("Patriot", "Elizabeth", 1574, true, "Sci-fi"));
+       /* mojeDatabaze.pridejKnihu(new Roman("Havran", "Edgar Poe", 2004, false, "Thriller"));
+        mojeDatabaze.pridejKnihu(new Roman("Na větrné hůrce", "Elizabeth", 1874, false, "Fantasy"));*/
+       /* mojeDatabaze.pridejKnihu(new Roman("Patriot", "Elizabeth", 1574, true, "Sci-fi"));
         mojeDatabaze.pridejKnihu(new Ucebnice("Aha", "Edgar Poe", 1374, false, 3));
         mojeDatabaze.pridejKnihu(new Ucebnice("Omáčka", "Edgar Poe", 1127, false, 9));
-        mojeDatabaze.pridejKnihu(new Ucebnice("o", "Edgar Poe", 987, true, 1));
+        mojeDatabaze.pridejKnihu(new Ucebnice("o", "Edgar Poe", 987, true, 1));*/
         
         boolean run = true;
         while (run) {
@@ -169,7 +181,6 @@ public class Knihovna {
                 
                 
                 // Přidání nové knihy
-                //mojeDatabaze.pridejKnihu(new Kniha(nazevKnihy, jmenoAutora, rokVydani, dostupnost));
                 System.out.println("-----------Kniha přidána do knihovny!--------------------");
                 System.out.println("-----------Přesměrování na hlavní stránku ---------------");
                 pauza(3000);
@@ -247,6 +258,7 @@ public class Knihovna {
                 pauza(3000);
                 break;
             case 7:
+                // Výpis všech knih daného autora
             	System.out.println("Zadejte jméno autora, jehož knihy chcete vypsat (dbejte prosím velkých a malých písmen):");
                 String hledatAutor = sc.nextLine();
                 
@@ -257,12 +269,13 @@ public class Knihovna {
                 	  break;
                   }
                 
-                // Výpis všech knih daného autora
+
                 mojeDatabaze.vypisKnihyAutor(hledatAutor);
                 pauza(3000);
                 break;
                 
             case 8:
+                // Výpis všech knih daného žánru
                  System.out.println("Zadejte 1 pro Thriller, 2 pro Fantasy, 3 pro Sci-fi, 4 pro Young Adult a 5 pro Beletrie:");
              	int volbaZanru = sc.nextInt();
 
@@ -283,8 +296,7 @@ public class Knihovna {
              	} else {
              	    System.out.println("Neplatná volba žánru.");
              	} 
-                 // Výpis všech knih daného žánru
-                // mojeDatabaze.vypisKnihyZanr(hledatZanr);
+
                  pauza(3000);
                  break;
             case 9:
@@ -319,14 +331,15 @@ public class Knihovna {
             	pauza(3000);
                 break;
             case 12:
-                run = false;
+                mojeDatabaze.ulozDoDatabaze();
+            	run = false;
                 break;
 
         }
     }
 
     // Uložení informací do SQL databáze při ukončení programu
-        mojeDatabaze.ulozDoDatabaze();
+       // mojeDatabaze.ulozDoDatabaze();
         sc.close();
 	}
 }

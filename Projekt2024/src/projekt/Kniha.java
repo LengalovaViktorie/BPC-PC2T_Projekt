@@ -2,7 +2,6 @@ package projekt;
 
 //TODO možnost mít více autorů
 //TODO dostupnost knihy aby vypisovala dostupné nebo vypůjčené a ne true a false
-//TODO žánr a ročník - udělat výběr? ošetřit možnosti
 
 public class Kniha {
 	
