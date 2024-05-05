@@ -267,81 +267,71 @@ public class Databaze {
 			pripojeni = DriverManager.getConnection("jdbc:sqlite:databaze.db");
 
 			String sqlDeleteAll = "DELETE FROM Knihy; DELETE FROM Roman; DELETE FROM Ucebnice; DELETE FROM Autor; DELETE FROM AutorKnihy;";
-			Statement statement = pripojeni.createStatement();
-			statement.executeUpdate(sqlDeleteAll);
+	        Statement statement = pripojeni.createStatement();
+	        statement.executeUpdate(sqlDeleteAll);
 
-			String sqlKnihaExists = "SELECT 1 FROM Knihy WHERE nazevKniha = ?";
-			PreparedStatement psKnihaExists = pripojeni.prepareStatement(sqlKnihaExists);
+	        String sqlKniha = "INSERT OR IGNORE INTO Knihy (nazevKniha, rok, dostupnost) VALUES (?, ?, ?)";
+	        PreparedStatement psKniha = pripojeni.prepareStatement(sqlKniha, Statement.RETURN_GENERATED_KEYS);
 
-			String sqlKniha = "INSERT OR IGNORE INTO Knihy (nazevKniha, rok, dostupnost) VALUES (?, ?, ?)";
-			PreparedStatement psKniha = pripojeni.prepareStatement(sqlKniha, Statement.RETURN_GENERATED_KEYS);
+	        String sqlRoman = "INSERT INTO Roman (IdKniha, nazevZanru) VALUES (?, ?)";
+	        PreparedStatement psRoman = pripojeni.prepareStatement(sqlRoman);
 
-			String sqlRoman = "INSERT INTO Roman (IdKniha, nazevZanru) VALUES (?, ?)";
-			PreparedStatement psRoman = pripojeni.prepareStatement(sqlRoman);
+	        String sqlUcebnice = "INSERT INTO Ucebnice (IdKniha, Doporuceni) VALUES (?, ?)";
+	        PreparedStatement psUcebnice = pripojeni.prepareStatement(sqlUcebnice);
 
-			String sqlUcebnice = "INSERT INTO Ucebnice (IdKniha, Doporuceni) VALUES (?, ?)";
-			PreparedStatement psUcebnice = pripojeni.prepareStatement(sqlUcebnice);
+	        String sqlAutorExists = "SELECT IdAutor FROM Autor WHERE jmenoAutora = ?";
+	        PreparedStatement psAutorExists = pripojeni.prepareStatement(sqlAutorExists);
 
-			String sqlAutorExists = "SELECT IdAutor FROM Autor WHERE jmenoAutora = ?";
-			PreparedStatement psAutorExists = pripojeni.prepareStatement(sqlAutorExists);
+	        String sqlAutor = "INSERT INTO Autor (jmenoAutora) VALUES (?)";
+	        PreparedStatement psAutor = pripojeni.prepareStatement(sqlAutor);
 
-			String sqlAutor = "INSERT INTO Autor (jmenoAutora) VALUES (?)";
-			PreparedStatement psAutor = pripojeni.prepareStatement(sqlAutor);
+	        String sqlAutorKnihy = "INSERT INTO AutorKnihy (IdAutor, IdKniha) VALUES (?, ?)";
+	        PreparedStatement psAutorKnihy = pripojeni.prepareStatement(sqlAutorKnihy);
 
-			String sqlAutorKnihy = "INSERT INTO AutorKnihy (IdAutor, IdKniha) VALUES (?, ?)";
-			PreparedStatement psAutorKnihy = pripojeni.prepareStatement(sqlAutorKnihy);
+	        for (Kniha kniha : knihy) {
+	            psKniha.setString(1, kniha.getNazevKnihy());
+	            psKniha.setInt(2, kniha.getRokVydani());
+	            psKniha.setBoolean(3, kniha.getDostupnost());
+	            psKniha.executeUpdate();
 
-			for (Kniha kniha : knihy) {
-				psKnihaExists.setString(1, kniha.getNazevKnihy());
-				ResultSet resultSet = psKnihaExists.executeQuery();
-				if (resultSet.next()) {
-					System.out.println("Kniha '" + kniha.getNazevKnihy() + "' již existuje v databázi. Ignorováno.");
-					continue;
-				}
+	            ResultSet generatedKeys = psKniha.getGeneratedKeys();
+	            int idKniha = -1;
+	            if (generatedKeys.next()) {
+	                idKniha = generatedKeys.getInt(1);
+	            }
 
-				psKniha.setString(1, kniha.getNazevKnihy());
-				psKniha.setInt(2, kniha.getRokVydani());
-				psKniha.setBoolean(3, kniha.getDostupnost());
-				psKniha.executeUpdate();
+	            if (kniha instanceof Roman) {
+	                Roman roman = (Roman) kniha;
+	                psRoman.setInt(1, idKniha);
+	                psRoman.setString(2, roman.getZanr());
+	                psRoman.executeUpdate();
+	            } else if (kniha instanceof Ucebnice) {
+	                Ucebnice ucebnice = (Ucebnice) kniha;
+	                psUcebnice.setInt(1, idKniha);
+	                psUcebnice.setInt(2, ucebnice.getRocnik());
+	                psUcebnice.executeUpdate();
+	            }
 
-				ResultSet generatedKeys = psKniha.getGeneratedKeys();
-				int idKniha = -1;
-				if (generatedKeys.next()) {
-					idKniha = generatedKeys.getInt(1);
-				}
+	            psAutorExists.setString(1, kniha.getJmenoAutora());
+	            ResultSet resultSet = psAutorExists.executeQuery();
+	            int idAutor;
+	            if (resultSet.next()) {
+	                idAutor = resultSet.getInt(1);
+	            } else {
+	                psAutor.setString(1, kniha.getJmenoAutora());
+	                psAutor.executeUpdate();
+	                ResultSet generatedKeysAutor = psAutor.getGeneratedKeys();
+	                if (generatedKeysAutor.next()) {
+	                    idAutor = generatedKeysAutor.getInt(1);
+	                } else {
+	                    throw new SQLException("Vložení nového autora se nezdařilo.");
+	                }
+	            }
 
-				if (kniha instanceof Roman) {
-					Roman roman = (Roman) kniha;
-					psRoman.setInt(1, idKniha);
-					psRoman.setString(2, roman.getZanr());
-					psRoman.executeUpdate();
-				} else if (kniha instanceof Ucebnice) {
-					Ucebnice ucebnice = (Ucebnice) kniha;
-					psUcebnice.setInt(1, idKniha);
-					psUcebnice.setInt(2, ucebnice.getRocnik());
-					psUcebnice.executeUpdate();
-				}
-
-				psAutorExists.setString(1, kniha.getJmenoAutora());
-				resultSet = psAutorExists.executeQuery();
-				int idAutor;
-				if (resultSet.next()) {
-					idAutor = resultSet.getInt(1);
-				} else {
-					psAutor.setString(1, kniha.getJmenoAutora());
-					psAutor.executeUpdate();
-					ResultSet generatedKeysAutor = psAutor.getGeneratedKeys();
-					if (generatedKeysAutor.next()) {
-						idAutor = generatedKeysAutor.getInt(1);
-					} else {
-						throw new SQLException("Vložení nového autora se nezdařilo.");
-					}
-				}
-
-				psAutorKnihy.setInt(1, idAutor);
-				psAutorKnihy.setInt(2, idKniha);
-				psAutorKnihy.executeUpdate();
-			}
+	            psAutorKnihy.setInt(1, idAutor);
+	            psAutorKnihy.setInt(2, idKniha);
+	            psAutorKnihy.executeUpdate();
+	        }
 			System.out.println("Data úspěšně uložena do databáze");
 		} catch (SQLException e) {
 			System.out.println("Chyba při připojování k databázi: " + e.getMessage());
